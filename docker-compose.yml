@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  kdyr-postgres:
+    container_name: "kdyr-postgres"
+    image: postgres:14.4
+    ports:
+      - "4321:5432"
+    environment:
+      POSTGRES_USER: "dev"
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: "kdyr"
+  kdyr:
+    container_name: "kdyr"
+    ports:
+      - "8095:8095"
+    build:
+      context: .
+      dockerfile: ./cmd/kdyr/Dockerfile
+    restart: always
+    depends_on:
+      - kdyr-postgres
+    volumes:
+      - ./cmd/kdyr/config.yaml:/configs/config.yaml:ro
+    command:
+      - -config-path
+      - /configs/config.yaml
+
+  ui:
+    container_name: "ui"
+    build:
+      context: .
+      dockerfile: ./ui/Dockerfile
+    restart: always
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./ui:/app
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "8082:8082"
